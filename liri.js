@@ -2,6 +2,7 @@ require("dotenv").config();
 
 var keys = require("./keys.js");
 var request = require("request");
+var axios = require("axios");
 var fs = require("fs");
 var moment = require("moment");
 var Spotify = require('node-spotify-api');
@@ -18,14 +19,14 @@ var dataLine7;
 var dataLine8;
 
 
-var commandLine = "";
-for (i = 0; i < process.argv.length; i++) {
-    commandLine += (process.argv[i] + " ");
-}
-
-for (i = 3; i < process.argv.length; i++) {
-    commandLine += (process.argv[i] + " ");
-};
+var secondCommand = process.argv.slice(3).join(" ");
+//for (i = 0; i < process.argv.length; i++) {
+//    commandLine += (process.argv[i] + " ");
+//}
+//
+//for (i = 3; i < process.argv.length; i++) {
+//    commandLine += (process.argv[i] + " ");
+//};
 
 searchItem = searchItem.trim();
 
@@ -47,20 +48,52 @@ switch (command) {
 };
 
 function concertThis() {
-    if (!searchItem) {
-        searchItem = "Rolling Stones"
-    }
-    request("https://rest.bandsintown.com/artists/") + searchItem + "/events"
-}
+	console.log('Searching Bands in Town!')
+	var artist = secondCommand;
+	
+    axios.get("https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp").then(function(response,error,body){
+		let jsonData = response.data;
+			// console.log(jsonData[0].venue.name);
+			// for(let i = 0; i < jsonData.length; i++){
+			// 	console.log(jsonData[i].venue.name)
+			// 	console.log(jsonData[i].venue.city)
+			// 	console.log(jsonData[i].venue.country)
+			// }
+
+			console.log(); 
+			// + 'Date:' + moment(show.datetime).format('MM/DD/YYYY'));
+
+		   if (!jsonData.length) { 
+	  console.log("No results found for " + artist);
+	  return;
+   }
+
+//    console.log("Upcoming concerts for " + artist + ":"+ 'Venue Name' + jsonData[0].venue.name + 'Venue City' +
+//    (jsonData[0].venue.region || jsonData[0].venue.city));
+
+   for(var i = 0; i < jsonData.length; i++) {
+	   var show = jsonData[i];
+
+	   console.log(
+		show.venue.city +
+		  "," +
+		  (show.venue.region || show.venue.country) +
+		  " at " +
+		  show.venue.name +
+		  " " +
+		  moment(show.datetime).format("MM/DD/YYYY")
+	  );
+	 } 
+	}
+	);
+};
 
 function spotifyThis(){
-	console.log("enterSomething!");
-
-	
+	console.log("Searching Spotify");
 
 	var searchTrack;
-	if(secondCommand === undefined){
-		searchTrack = "Tell me mister meow meow"";
+	if(secondCommand == undefined){
+		searchTrack = "The Sign";
 	}else{
 		searchTrack = secondCommand;
 	}
@@ -70,7 +103,7 @@ function spotifyThis(){
 	        console.log('Error occurred: ' + err);
 	        return;
 	    }else{
-	       
+		
 	  		console.log("Artist: " + data.tracks.items[0].artists[0].name);
 	        console.log("Song: " + data.tracks.items[0].name);
 	        console.log("Album: " + data.tracks.items[0].album.name);
@@ -90,9 +123,10 @@ function movieThis(){
 		searchMovie = secondCommand;
 	};
 
-	var url = 'http://www.omdbapi.com/?t=' + searchMovie +'&y=&plot=long&tomatoes=true&r=json';
+	var url = 'http://www.omdbapi.com/?t=' + searchMovie +'&y=&plot=full&tomatoes=true&apikey=trilogy';
    	request(url, function(error, response, body){
 	    if(!error && response.statusCode == 200){
+            // console.log(response);
 	        console.log("Title: " + JSON.parse(body)["Title"]);
 	        console.log("Year: " + JSON.parse(body)["Year"]);
 	        console.log("IMDB Rating: " + JSON.parse(body)["imdbRating"]);
@@ -106,14 +140,22 @@ function movieThis(){
     });
 };
 
-function addTheStuff() {
+function doWhat() {
     fs.readFile("random.txt", "utf8", function(error, data) {
         if (error) {
             console.log(error);
         } else {
-            
-            spotifyThis(data[1]);
+			console.log(data);
+
+			// let dataArr = data.split(",");
+
+			// if (dataArr.length === 2) {
+			// 		secondCommand(dataArr[0], dataArr[1]);
+			// 	} else if (dataArr.length === 1) {
+			// 		secondCommand(dataArr[0]);
+
+			}
         }
     
-    });
+    );
 }
